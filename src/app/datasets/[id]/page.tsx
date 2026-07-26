@@ -23,9 +23,11 @@ import {
   IconClock,
   IconUpload,
   IconDownload,
+  IconPlayground,
 } from "@/components/icons";
 import { timeAgo } from "@/lib/cn";
 import { parseItems, toCSV, download } from "@/lib/csv";
+import { ComparisonView, type CompareRun } from "@/components/comparison-view";
 import type {
   Dataset,
   DatasetItem,
@@ -66,6 +68,18 @@ export default function DatasetDetailPage() {
   // results view
   const [results, setResults] = useState<ExperimentResult[]>([]);
   const [activeExp, setActiveExp] = useState<Experiment | null>(null);
+
+  // compare
+  const [compareModels, setCompareModels] = useState<string[]>([]);
+  const [comparing, setComparing] = useState(false);
+  const [compareProgress, setCompareProgress] = useState<{
+    model: string;
+    completed: number;
+    total: number;
+    idx: number;
+    count: number;
+  } | null>(null);
+  const [compareRuns, setCompareRuns] = useState<CompareRun[]>([]);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/datasets/${id}`);
@@ -256,6 +270,97 @@ export default function DatasetDetailPage() {
       setProgress(null);
     }
   };
+
+  // Run one model over the dataset, streaming; returns its experiment + results.
+  const runModelStream = async (
+    m: string,
+    onProgress: (completed: number, total: number) => void
+  ): Promise<CompareRun> => {
+    const res = await fetch("/api/experiments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        datasetId: id,
+        model: m,
+        systemPrompt: system || undefined,
+        judge: { enabled: judge, criteria: criteria || undefined },
+      }),
+    });
+    if (!res.ok || !res.body) {
+      const err = await res.json().catch(() => ({ error: "Run failed" }));
+      throw new Error(err.error || "Run failed");
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    const collected: ExperimentResult[] = [];
+    let experiment: Experiment | null = null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const msg = JSON.parse(line);
+        if (msg.type === "item") {
+          collected.push(msg.result);
+          onProgress(msg.completed, items.length);
+        } else if (msg.type === "done") {
+          experiment = msg.experiment;
+        }
+      }
+    }
+    if (!experiment) throw new Error("No experiment returned");
+    return { model: m, experiment, results: collected };
+  };
+
+  const runCompare = async () => {
+    if (compareModels.length < 2 || comparing) {
+      if (compareModels.length < 2) alert("Pick at least 2 models to compare.");
+      return;
+    }
+    setComparing(true);
+    setCompareRuns([]);
+    setActiveExp(null);
+    setResults([]);
+    try {
+      const runs: CompareRun[] = [];
+      for (let i = 0; i < compareModels.length; i++) {
+        const m = compareModels[i];
+        setCompareProgress({
+          model: m,
+          completed: 0,
+          total: items.length,
+          idx: i + 1,
+          count: compareModels.length,
+        });
+        const run = await runModelStream(m, (completed, total) =>
+          setCompareProgress({
+            model: m,
+            completed,
+            total,
+            idx: i + 1,
+            count: compareModels.length,
+          })
+        );
+        runs.push(run);
+        setCompareRuns([...runs]);
+      }
+      await load();
+    } catch (e) {
+      alert(`Compare failed: ${(e as Error).message}`);
+    } finally {
+      setComparing(false);
+      setCompareProgress(null);
+    }
+  };
+
+  const toggleCompareModel = (m: string) =>
+    setCompareModels((prev) =>
+      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]
+    );
 
   const viewExperiment = async (expId: string) => {
     const res = await fetch(`/api/experiments/${expId}`);
@@ -492,6 +597,61 @@ export default function DatasetDetailPage() {
             )}
           </Card>
 
+          <Card className="space-y-3 p-4">
+            <h3 className="flex items-center gap-2 text-sm font-medium">
+              <IconPlayground width={15} height={15} className="text-accent" /> Compare
+              models
+            </h3>
+            <p className="text-xs text-muted">
+              Run this dataset across multiple models and see which wins. Uses the
+              judge setting above.
+            </p>
+            <div className="max-h-40 space-y-1 overflow-y-auto">
+              {models.map((m) => (
+                <label
+                  key={m.name}
+                  className="flex items-center gap-2 rounded-md px-1 py-1 text-sm text-muted hover:text-fg"
+                >
+                  <input
+                    type="checkbox"
+                    checked={compareModels.includes(m.name)}
+                    onChange={() => toggleCompareModel(m.name)}
+                    className="accent-[var(--primary)]"
+                  />
+                  {m.name}
+                </label>
+              ))}
+            </div>
+            <Button
+              className="w-full"
+              variant="ghost"
+              onClick={runCompare}
+              disabled={comparing || compareModels.length < 2 || items.length === 0}
+            >
+              {comparing ? <Spinner /> : <IconPlayground width={15} height={15} />}
+              {comparing
+                ? "Comparing…"
+                : `Compare ${compareModels.length || ""} models`}
+            </Button>
+            {comparing && compareProgress && (
+              <div className="space-y-1">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-panel-2">
+                  <div
+                    className="h-full rounded-full bg-accent transition-all duration-300"
+                    style={{
+                      width: `${(compareProgress.completed / compareProgress.total) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-center text-[11px] text-muted-2">
+                  Model {compareProgress.idx}/{compareProgress.count} ·{" "}
+                  {compareProgress.model} · {compareProgress.completed}/
+                  {compareProgress.total}
+                </p>
+              </div>
+            )}
+          </Card>
+
           {experiments.length > 0 && (
             <Card className="p-4">
               <h3 className="mb-3 text-sm font-medium">Past runs</h3>
@@ -609,6 +769,8 @@ export default function DatasetDetailPage() {
           </div>
         </Card>
       )}
+
+      {compareRuns.length > 0 && <ComparisonView items={items} runs={compareRuns} />}
     </div>
   );
 }
