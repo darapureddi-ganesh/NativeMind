@@ -378,6 +378,13 @@ export default function DatasetDetailPage() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   };
 
+  // deep link: /datasets/:id?exp=<experimentId> auto-opens that run's results
+  useEffect(() => {
+    const expId = new URLSearchParams(window.location.search).get("exp");
+    if (expId) viewExperiment(expId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const deleteDataset = async () => {
     if (!confirm("Delete this dataset, its items, and its experiments?")) return;
     await fetch(`/api/datasets/${id}`, { method: "DELETE" });
