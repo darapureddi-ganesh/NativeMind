@@ -26,16 +26,24 @@ export default function PlaygroundPage() {
   ]);
 
   useEffect(() => {
-    fetch("/api/models")
-      .then((r) => r.json())
-      .then((d) => {
-        const ms: OllamaModel[] = d.models ?? [];
-        setModels(ms);
-        setSides((prev) => [
-          { ...prev[0], model: ms[0]?.name ?? "" },
-          { ...prev[1], model: ms[1]?.name ?? ms[0]?.name ?? "" },
-        ]);
-      });
+    (async () => {
+      const [mData, sData] = await Promise.all([
+        fetch("/api/models").then((r) => r.json()),
+        fetch("/api/settings").then((r) => r.json()).catch(() => ({})),
+      ]);
+      const ms: OllamaModel[] = mData.models ?? [];
+      setModels(ms);
+      const preferred: string | undefined = sData?.settings?.defaultModel;
+      const first =
+        preferred && ms.some((m) => m.name === preferred)
+          ? preferred
+          : (ms[0]?.name ?? "");
+      const second = ms.find((m) => m.name !== first)?.name ?? first;
+      setSides((prev) => [
+        { ...prev[0], model: first },
+        { ...prev[1], model: second },
+      ]);
+    })();
   }, []);
 
   const setSide = (i: 0 | 1, patch: Partial<Side>) =>

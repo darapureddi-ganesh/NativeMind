@@ -11,6 +11,9 @@ import {
   IconTraces,
   IconChat,
   IconTrash,
+  IconCopy,
+  IconRefresh,
+  IconCheck,
 } from "@/components/icons";
 import { cn, timeAgo } from "@/lib/cn";
 import type { OllamaModel, ChatMessage } from "@/lib/types";
@@ -43,6 +46,9 @@ export default function ChatPage() {
   const [busy, setBusy] = useState(false);
   const [convId, setConvId] = useState<string>(() => crypto.randomUUID());
   const [conversations, setConversations] = useState<ConvSummary[]>([]);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = useCallback(async () => {
@@ -52,12 +58,20 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/models")
-      .then((r) => r.json())
-      .then((d) => {
-        setModels(d.models ?? []);
-        if (d.models?.[0]) setModel(d.models[0].name);
-      });
+    (async () => {
+      const [mData, sData] = await Promise.all([
+        fetch("/api/models").then((r) => r.json()),
+        fetch("/api/settings").then((r) => r.json()).catch(() => ({})),
+      ]);
+      const ms: OllamaModel[] = mData.models ?? [];
+      setModels(ms);
+      const preferred = sData?.settings?.defaultModel;
+      setModel(
+        preferred && ms.some((m) => m.name === preferred)
+          ? preferred
+          : (ms[0]?.name ?? "")
+      );
+    })();
     loadConversations();
   }, [loadConversations]);
 
@@ -69,6 +83,7 @@ export default function ChatPage() {
     setConvId(crypto.randomUUID());
     setMessages([]);
     setInput("");
+    setEditingIdx(null);
   };
 
   const openConversation = async (id: string) => {
@@ -97,22 +112,12 @@ export default function ChatPage() {
     await loadConversations();
   };
 
-  const send = async () => {
-    const content = input.trim();
-    if (!content || busy || !model) return;
-    setInput("");
-    const history: UIMessage[] = [
-      ...messages,
-      { role: "user", content },
-      { role: "assistant", content: "", streaming: true },
-    ];
-    setMessages(history);
+  // Core: given the full message list to send, append a streaming assistant
+  // bubble and stream tokens into it.
+  const streamInto = async (base: UIMessage[]) => {
+    setMessages([...base, { role: "assistant", content: "", streaming: true }]);
     setBusy(true);
-
-    const payload: ChatMessage[] = history
-      .filter((m) => !m.streaming)
-      .map(({ role, content }) => ({ role, content }));
-
+    const payload: ChatMessage[] = base.map(({ role, content }) => ({ role, content }));
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -181,6 +186,53 @@ export default function ChatPage() {
       setBusy(false);
     }
   };
+
+  const send = async () => {
+    const content = input.trim();
+    if (!content || busy || !model) return;
+    setInput("");
+    await streamInto([...messages, { role: "user", content }]);
+  };
+
+  const regenerate = async () => {
+    if (busy || !model) return;
+    let lastUser = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        lastUser = i;
+        break;
+      }
+    }
+    if (lastUser < 0) return;
+    await streamInto(messages.slice(0, lastUser + 1));
+  };
+
+  const startEdit = (idx: number) => {
+    setEditingIdx(idx);
+    setEditingText(messages[idx].content);
+  };
+
+  const submitEdit = async () => {
+    if (editingIdx == null || !editingText.trim() || busy) return;
+    const idx = editingIdx;
+    const text = editingText.trim();
+    setEditingIdx(null);
+    await streamInto([...messages.slice(0, idx), { role: "user", content: text }]);
+  };
+
+  const copy = (idx: number, text: string) => {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx((c) => (c === idx ? null : c)), 1500);
+    });
+  };
+
+  const lastAssistantIdx = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return i;
+    }
+    return -1;
+  })();
 
   return (
     <div className="flex h-screen">
@@ -294,23 +346,48 @@ export default function ChatPage() {
                 key={i}
                 className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
               >
-                <div className={m.role === "user" ? "max-w-[85%]" : "w-full max-w-[85%]"}>
-                  <div
-                    className={
-                      m.role === "user"
-                        ? "rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-fg"
-                        : "rounded-2xl rounded-bl-sm border border-border bg-panel px-4 py-3 text-sm"
-                    }
-                  >
-                    <div className="prose-chat whitespace-pre-wrap break-words">
-                      {m.content}
-                      {m.streaming && (
-                        <span className="ml-1 inline-block h-3.5 w-1.5 animate-pulse bg-primary align-middle" />
-                      )}
+                <div className={m.role === "user" ? "max-w-[85%]" : "group w-full max-w-[85%]"}>
+                  {editingIdx === i ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        rows={3}
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setEditingIdx(null)}>
+                          Cancel
+                        </Button>
+                        <Button size="sm" onClick={submitEdit} disabled={busy}>
+                          Save & resend
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  {(m.metrics || m.traceId) && (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 pl-1 text-[11px] text-muted-2">
+                  ) : (
+                    <div
+                      className={
+                        m.role === "user"
+                          ? "rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-fg"
+                          : "rounded-2xl rounded-bl-sm border border-border bg-panel px-4 py-3 text-sm"
+                      }
+                    >
+                      <div className="prose-chat whitespace-pre-wrap break-words">
+                        {m.content}
+                        {m.streaming && (
+                          <span className="ml-1 inline-block h-3.5 w-1.5 animate-pulse bg-primary align-middle" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action row */}
+                  {!m.streaming && editingIdx !== i && (
+                    <div
+                      className={cn(
+                        "mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-2",
+                        m.role === "user" ? "justify-end pr-1" : "pl-1"
+                      )}
+                    >
                       {m.metrics && (
                         <>
                           <span className="inline-flex items-center gap-1">
@@ -336,8 +413,40 @@ export default function ChatPage() {
                           href={`/traces/${m.traceId}`}
                           className="inline-flex items-center gap-1 text-primary hover:underline"
                         >
-                          <IconTraces width={11} height={11} /> View trace
+                          <IconTraces width={11} height={11} /> trace
                         </Link>
+                      )}
+                      {m.role === "assistant" && m.content && (
+                        <button
+                          onClick={() => copy(i, m.content)}
+                          className="inline-flex items-center gap-1 hover:text-fg"
+                        >
+                          {copiedIdx === i ? (
+                            <>
+                              <IconCheck width={11} height={11} /> copied
+                            </>
+                          ) : (
+                            <>
+                              <IconCopy width={11} height={11} /> copy
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {m.role === "assistant" && i === lastAssistantIdx && !busy && (
+                        <button
+                          onClick={regenerate}
+                          className="inline-flex items-center gap-1 hover:text-fg"
+                        >
+                          <IconRefresh width={11} height={11} /> regenerate
+                        </button>
+                      )}
+                      {m.role === "user" && !busy && (
+                        <button
+                          onClick={() => startEdit(i)}
+                          className="opacity-0 transition hover:text-fg group-hover:opacity-100"
+                        >
+                          edit
+                        </button>
                       )}
                     </div>
                   )}

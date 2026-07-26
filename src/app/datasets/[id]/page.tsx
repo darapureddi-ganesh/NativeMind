@@ -97,12 +97,20 @@ export default function DatasetDetailPage() {
 
   useEffect(() => {
     load();
-    fetch("/api/models")
-      .then((r) => r.json())
-      .then((d) => {
-        setModels(d.models ?? []);
-        if (d.models?.[0]) setModel(d.models[0].name);
-      });
+    (async () => {
+      const [mData, sData] = await Promise.all([
+        fetch("/api/models").then((r) => r.json()),
+        fetch("/api/settings").then((r) => r.json()).catch(() => ({})),
+      ]);
+      const ms = mData.models ?? [];
+      setModels(ms);
+      const preferred = sData?.settings?.defaultModel;
+      setModel(
+        preferred && ms.some((m: OllamaModel) => m.name === preferred)
+          ? preferred
+          : (ms[0]?.name ?? "")
+      );
+    })();
   }, [load]);
 
   const addItem = async () => {

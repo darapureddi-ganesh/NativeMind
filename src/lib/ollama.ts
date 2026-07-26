@@ -2,12 +2,10 @@
 // Docs: https://github.com/ollama/ollama/blob/main/docs/api.md
 
 import type { ChatMessage, OllamaModel, TraceParams } from "./types";
-
-export const OLLAMA_HOST =
-  process.env.OLLAMA_HOST?.replace(/\/$/, "") || "http://localhost:11434";
+import { resolveOllamaHost } from "./settings";
 
 async function api(path: string, init?: RequestInit) {
-  const res = await fetch(`${OLLAMA_HOST}${path}`, init);
+  const res = await fetch(`${resolveOllamaHost()}${path}`, init);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(
@@ -20,7 +18,7 @@ async function api(path: string, init?: RequestInit) {
 /** Is Ollama reachable? */
 export async function ping(): Promise<boolean> {
   try {
-    const res = await fetch(`${OLLAMA_HOST}/api/tags`, {
+    const res = await fetch(`${resolveOllamaHost()}/api/tags`, {
       signal: AbortSignal.timeout(3000),
     });
     return res.ok;

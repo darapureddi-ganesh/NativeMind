@@ -62,6 +62,28 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** Delete all traces + their evaluations (keeps datasets/conversations). */
+export function clearTraces(): void {
+  writeAll("traces", []);
+  writeAll("evaluations", []);
+}
+
+/** Wipe all app data (keeps settings.json). */
+export function resetAllData(): void {
+  for (const c of [
+    "traces",
+    "evaluations",
+    "conversations",
+    "messages",
+    "datasets",
+    "dataset_items",
+    "experiments",
+    "experiment_results",
+  ]) {
+    writeAll(c, []);
+  }
+}
+
 /* ---------------------------------- Traces --------------------------------- */
 
 export const traces = {

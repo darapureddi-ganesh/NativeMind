@@ -11,8 +11,10 @@ import {
   IconTraces,
   IconPlayground,
   IconDataset,
+  IconSettings,
   IconSparkle,
 } from "./icons";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: IconDashboard },
@@ -21,10 +23,12 @@ const NAV = [
   { href: "/traces", label: "Traces", icon: IconTraces },
   { href: "/datasets", label: "Datasets", icon: IconDataset },
   { href: "/playground", label: "Playground", icon: IconPlayground },
+  { href: "/settings", label: "Settings", icon: IconSettings },
 ];
 
 function OllamaStatus() {
   const [state, setState] = useState<"checking" | "up" | "down">("checking");
+  const [traceCount, setTraceCount] = useState<number | null>(null);
   useEffect(() => {
     let alive = true;
     const check = async () => {
@@ -34,6 +38,12 @@ function OllamaStatus() {
         if (alive) setState(data.ok ? "up" : "down");
       } catch {
         if (alive) setState("down");
+      }
+      try {
+        const s = await fetch("/api/stats").then((r) => r.json());
+        if (alive) setTraceCount(s.totals?.totalCalls ?? 0);
+      } catch {
+        /* ignore */
       }
     };
     check();
@@ -54,9 +64,16 @@ function OllamaStatus() {
     state === "up" ? "Ollama connected" : state === "down" ? "Ollama offline" : "Checking…";
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-border bg-panel-2 px-3 py-2 text-xs text-muted">
-      <span className={cn("h-2 w-2 rounded-full", dot)} />
-      {label}
+    <div className="rounded-lg border border-border bg-panel-2 px-3 py-2 text-xs text-muted">
+      <div className="flex items-center gap-2">
+        <span className={cn("h-2 w-2 rounded-full", dot)} />
+        {label}
+      </div>
+      {traceCount != null && (
+        <div className="mt-1 text-[11px] text-muted-2">
+          {traceCount.toLocaleString()} trace{traceCount === 1 ? "" : "s"} logged
+        </div>
+      )}
     </div>
   );
 }
@@ -102,9 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="mt-4 space-y-2">
           <OllamaStatus />
-          <p className="px-1 text-[11px] leading-relaxed text-muted-2">
-            Control your local LLMs — with tracing & evals built in.
-          </p>
+          <ThemeToggle />
         </div>
       </aside>
 

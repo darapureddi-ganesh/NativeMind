@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { traces, evaluations } from "@/lib/store";
+import { traces, evaluations, clearTraces } from "@/lib/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// DELETE /api/traces — clear ALL traces and evaluations
+export async function DELETE() {
+  clearTraces();
+  return NextResponse.json({ ok: true });
+}
 
 // GET /api/traces?model=&type=&limit= — list traces with eval summaries
 export async function GET(req: NextRequest) {
