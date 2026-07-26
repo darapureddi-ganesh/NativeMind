@@ -1,65 +1,223 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Card, Badge, Button, Spinner } from "@/components/ui";
+import {
+  IconTraces,
+  IconClock,
+  IconZap,
+  IconHash,
+  IconStar,
+  IconChat,
+} from "@/components/icons";
+
+interface Stats {
+  totals: {
+    totalCalls: number;
+    totalTokens: number;
+    avgLatency: number;
+    avgTps: number;
+    evalCount: number;
+  };
+  byModel: { model: string; calls: number; tokens: number; avgLatency: number }[];
+  days: { date: string; calls: number; tokens: number }[];
+  evalSummary: {
+    avgRating: number | null;
+    avgJudge: number | null;
+    manualCount: number;
+    judgeCount: number;
+  };
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+}) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <Card className="p-4">
+      <div className="mb-2 flex items-center gap-2 text-muted">
+        <span className="text-primary">{icon}</span>
+        <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+      </div>
+      <div className="text-2xl font-semibold tabular-nums">{value}</div>
+      {sub && <div className="mt-1 text-xs text-muted">{sub}</div>}
+    </Card>
+  );
+}
+
+function BarChart({ data }: { data: { date: string; calls: number }[] }) {
+  const max = Math.max(1, ...data.map((d) => d.calls));
+  return (
+    <div className="flex h-40 items-end gap-1.5">
+      {data.map((d) => (
+        <div key={d.date} className="group flex flex-1 flex-col items-center gap-1">
+          <div className="relative flex w-full flex-1 items-end">
+            <div
+              className="w-full rounded-t bg-primary/70 transition group-hover:bg-primary"
+              style={{ height: `${(d.calls / max) * 100}%`, minHeight: d.calls ? 4 : 0 }}
+              title={`${d.date}: ${d.calls} calls`}
+            />
+          </div>
+          <span className="text-[9px] text-muted-2">{d.date.slice(5)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((r) => r.json())
+      .then(setStats)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted">
+            Observability for every call to your local models.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <Link href="/chat">
+          <Button>
+            <IconChat width={16} height={16} /> New chat
+          </Button>
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20 text-muted">
+          <Spinner className="h-6 w-6" />
         </div>
-      </main>
+      ) : !stats || stats.totals.totalCalls === 0 ? (
+        <Card className="p-10 text-center">
+          <h2 className="text-lg font-medium">No traces yet</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+            Head to the Chat or Playground and talk to one of your local models.
+            Every call is automatically logged here with tokens, latency, and
+            speed — ready to evaluate.
+          </p>
+          <div className="mt-5 flex justify-center gap-2">
+            <Link href="/chat">
+              <Button>Start chatting</Button>
+            </Link>
+            <Link href="/models">
+              <Button variant="ghost">Manage models</Button>
+            </Link>
+          </div>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard
+              icon={<IconTraces width={16} height={16} />}
+              label="Total calls"
+              value={stats.totals.totalCalls.toLocaleString()}
+              sub={`${stats.totals.evalCount} evaluations`}
+            />
+            <StatCard
+              icon={<IconHash width={16} height={16} />}
+              label="Tokens"
+              value={stats.totals.totalTokens.toLocaleString()}
+            />
+            <StatCard
+              icon={<IconClock width={16} height={16} />}
+              label="Avg latency"
+              value={`${stats.totals.avgLatency} ms`}
+            />
+            <StatCard
+              icon={<IconZap width={16} height={16} />}
+              label="Avg speed"
+              value={`${stats.totals.avgTps} tok/s`}
+            />
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Card className="p-5 lg:col-span-2">
+              <h3 className="mb-4 text-sm font-medium">Calls — last 14 days</h3>
+              <BarChart data={stats.days} />
+            </Card>
+
+            <Card className="p-5">
+              <h3 className="mb-4 flex items-center gap-2 text-sm font-medium">
+                <IconStar width={15} height={15} className="text-warning" />
+                Evaluations
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-xs text-muted">Avg manual rating</div>
+                  <div className="text-xl font-semibold">
+                    {stats.evalSummary.avgRating ?? "—"}
+                    {stats.evalSummary.avgRating != null && (
+                      <span className="text-sm text-muted"> / 5</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-2">
+                    {stats.evalSummary.manualCount} rated
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted">Avg LLM-judge score</div>
+                  <div className="text-xl font-semibold">
+                    {stats.evalSummary.avgJudge ?? "—"}
+                    {stats.evalSummary.avgJudge != null && (
+                      <span className="text-sm text-muted"> / 10</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-2">
+                    {stats.evalSummary.judgeCount} judged
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <Card className="p-5">
+            <h3 className="mb-4 text-sm font-medium">By model</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-muted">
+                    <th className="pb-2 font-medium">Model</th>
+                    <th className="pb-2 text-right font-medium">Calls</th>
+                    <th className="pb-2 text-right font-medium">Tokens</th>
+                    <th className="pb-2 text-right font-medium">Avg latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.byModel.map((m) => (
+                    <tr key={m.model} className="border-t border-border/60">
+                      <td className="py-2">
+                        <Badge tone="primary">{m.model}</Badge>
+                      </td>
+                      <td className="py-2 text-right tabular-nums">{m.calls}</td>
+                      <td className="py-2 text-right tabular-nums">
+                        {m.tokens.toLocaleString()}
+                      </td>
+                      <td className="py-2 text-right tabular-nums">{m.avgLatency} ms</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

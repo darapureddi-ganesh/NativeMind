@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ */
+/* Lumeval design tokens — dark-first, luminous indigo accent.        */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0a0d14;
+  --panel: #111725;
+  --panel-2: #161d2e;
+  --border: #232c3f;
+  --fg: #e6ebf4;
+  --muted: #8a97ad;
+  --muted-2: #5f6b81;
+  --primary: #7c6cff;
+  --primary-hover: #8f82ff;
+  --primary-fg: #ffffff;
+  --accent: #22d3ee;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+    Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Chat content spacing (utility-only @apply is safe in v4) */
+.prose-chat pre {
+  @apply my-2 overflow-x-auto rounded-lg border border-border p-3 text-[13px];
+  background: #0c111b;
+}
+.prose-chat code {
+  @apply font-mono text-[13px];
+}
+.prose-chat p {
+  @apply my-1.5 leading-relaxed;
+}
+.prose-chat p:first-child {
+  @apply mt-0;
+}
+
+@keyframes lum-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: lum-spin 0.7s linear infinite;
 }

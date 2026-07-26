@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lumeval
 
-## Getting Started
+**A lightweight UI to control your local LLMs — with tracing and evaluation built in.**
 
-First, run the development server:
+Lumeval is a single, self-hosted app that sits on top of [Ollama](https://ollama.com).
+Chat with your local models, manage them, compare them side-by-side — and get
+**observability and evaluation** on every call, without standing up a heavy
+enterprise stack. Clone it, run it, done.
+
+---
+
+## Features
+
+- 💬 **Chat** — streaming conversations with any installed model, with system
+  prompt and temperature controls.
+- 📦 **Models** — list, pull (with live progress), and delete Ollama models from the UI.
+- 📊 **Traces** — every LLM call is automatically logged: prompt, response,
+  tokens, latency, and tokens/sec. Browse and filter them.
+- ⭐ **Evaluations** — score any response three ways:
+  - **Manual** star rating + notes
+  - **Auto metrics** (length, latency, speed — deterministic)
+  - **LLM-as-judge** — have a local model grade the response 1–10 with a rationale
+- 🧪 **Playground** — send one prompt to two models and compare output + metrics.
+- 📈 **Dashboard** — aggregate stats: calls, tokens, latency, speed, and eval scores over time.
+
+No external database, no cloud, no telemetry. Data lives in local JSON files under `./data`.
+
+---
+
+## Requirements
+
+- **[Ollama](https://ollama.com/download)** installed and running (default `http://localhost:11434`)
+- **Node.js 18.18+** (Node 20+ recommended)
+
+## Quick start
 
 ```bash
+git clone <your-repo-url> lumeval
+cd lumeval
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open **http://localhost:3000**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+If you don't have a model yet, go to the **Models** page and pull one (e.g. `llama3.2`),
+or from a terminal:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+ollama pull llama3.2
+```
 
-## Learn More
+## Production build
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Configuration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy `.env.example` to `.env` and adjust:
 
-## Deploy on Vercel
+| Variable            | Default                  | Description                                  |
+| ------------------- | ------------------------ | -------------------------------------------- |
+| `OLLAMA_HOST`       | `http://localhost:11434` | Where your Ollama server is listening.       |
+| `LUMEVAL_DATA_DIR`  | `./data`                 | Where traces/evals are stored (JSON files).  |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Docker
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker build -t lumeval .
+docker run -p 3000:3000 \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  -v "$(pwd)/data:/app/data" \
+  lumeval
+```
+
+> `host.docker.internal` lets the container reach Ollama running on your host machine.
+
+## How it works
+
+Lumeval is a **Next.js** app. Its API routes proxy the Ollama HTTP API and
+transparently record a **trace** for every completion. The store is a small
+JSON-file repository (`src/lib/store.ts`) — swap it for SQLite/Postgres by
+reimplementing that one module.
+
+```
+src/
+  app/
+    api/            # models, chat, traces, evaluations, stats, conversations
+    ...             # dashboard, chat, models, traces, playground pages
+  components/        # UI kit, app shell, icons
+  lib/               # ollama client, store, types
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE). Built to control local LLMs, your way.
