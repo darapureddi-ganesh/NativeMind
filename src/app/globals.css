@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/* Lumeval design tokens — dark-first, luminous indigo accent.        */
+/* NativeMind design tokens — dark-first, luminous indigo accent.        */
 /* ------------------------------------------------------------------ */
 :root {
   --bg: #0a0d14;

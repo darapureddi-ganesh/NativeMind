@@ -23,7 +23,7 @@ export function ThemeToggle() {
       document.documentElement.removeAttribute("data-theme");
     }
     try {
-      localStorage.setItem("lumeval-theme", next);
+      localStorage.setItem("nativemind-theme", next);
     } catch {
       /* ignore */
     }

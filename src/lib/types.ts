@@ -1,4 +1,4 @@
-// Shared domain types for Lumeval.
+// Shared domain types for NativeMind.
 
 export type Role = "system" | "user" | "assistant";
 

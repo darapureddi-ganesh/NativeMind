@@ -1,8 +1,8 @@
-# Lumeval
+# NativeMind
 
 **A lightweight UI to control your local LLMs — with tracing and evaluation built in.**
 
-Lumeval is a single, self-hosted app that sits on top of [Ollama](https://ollama.com).
+NativeMind is a single, self-hosted app that sits on top of [Ollama](https://ollama.com).
 Chat with your local models, manage them, compare them side-by-side — and get
 **observability and evaluation** on every call, without standing up a heavy
 enterprise stack. Clone it, run it, done.
@@ -35,8 +35,8 @@ No external database, no cloud, no telemetry. Data lives in local JSON files und
 ## Quick start
 
 ```bash
-git clone <your-repo-url> lumeval
-cd lumeval
+git clone <your-repo-url> nativemind
+cd nativemind
 npm install
 npm run dev
 ```
@@ -64,13 +64,13 @@ Copy `.env.example` to `.env` and adjust:
 | Variable            | Default                  | Description                                  |
 | ------------------- | ------------------------ | -------------------------------------------- |
 | `OLLAMA_HOST`       | `http://localhost:11434` | Where your Ollama server is listening.       |
-| `LUMEVAL_DATA_DIR`  | `./data`                 | Where traces/evals are stored (JSON files).  |
+| `NATIVEMIND_DATA_DIR`  | `./data`                 | Where traces/evals are stored (JSON files).  |
 
 ## Docker
 
 ### Option A — one command, bundled Ollama (recommended)
 
-Brings up **both** Ollama and Lumeval together — nothing else to install:
+Brings up **both** Ollama and NativeMind together — nothing else to install:
 
 ```bash
 docker compose up
@@ -82,21 +82,21 @@ Open http://localhost:3000, then pull a model into the bundled Ollama:
 docker compose exec ollama ollama pull llama3.2
 ```
 
-### Option B — Lumeval only, against Ollama on your host
+### Option B — NativeMind only, against Ollama on your host
 
 ```bash
-docker build -t lumeval .
+docker build -t nativemind .
 docker run -p 3000:3000 \
   -e OLLAMA_HOST=http://host.docker.internal:11434 \
   -v "$(pwd)/data:/app/data" \
-  lumeval
+  nativemind
 ```
 
 > `host.docker.internal` lets the container reach Ollama running on your host machine.
 
 ## How it works
 
-Lumeval is a **Next.js** app. Its API routes proxy the Ollama HTTP API and
+NativeMind is a **Next.js** app. Its API routes proxy the Ollama HTTP API and
 transparently record a **trace** for every completion. The store is a small
 JSON-file repository (`src/lib/store.ts`) — swap it for SQLite/Postgres by
 reimplementing that one module.

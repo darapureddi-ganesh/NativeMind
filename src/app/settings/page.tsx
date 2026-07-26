@@ -147,7 +147,7 @@ export default function SettingsPage() {
       <Card className="mt-6 space-y-4 p-5">
         <h2 className="text-sm font-medium">Data management</h2>
         <p className="text-xs text-muted">
-          Lumeval stores everything locally as JSON files. These actions are
+          NativeMind stores everything locally as JSON files. These actions are
           permanent.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">

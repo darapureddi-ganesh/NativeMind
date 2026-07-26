@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <IconSparkle width={18} height={18} />
           </span>
           <span className="text-lg font-semibold tracking-tight">
-            Lum<span className="text-primary">eval</span>
+            Native<span className="text-primary">Mind</span>
           </span>
         </Link>
 
@@ -128,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="flex items-center justify-between border-b border-border bg-panel/60 px-4 py-3 md:hidden">
           <Link href="/" className="flex items-center gap-2">
             <IconSparkle width={18} height={18} className="text-primary" />
-            <span className="font-semibold">Lumeval</span>
+            <span className="font-semibold">NativeMind</span>
           </Link>
           <OllamaStatus />
         </header>

@@ -21,7 +21,7 @@ import type {
 } from "./types";
 
 const DATA_DIR =
-  process.env.LUMEVAL_DATA_DIR || path.join(process.cwd(), "data");
+  process.env.NATIVEMIND_DATA_DIR || path.join(process.cwd(), "data");
 
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) {

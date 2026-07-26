@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DATA_DIR =
-  process.env.LUMEVAL_DATA_DIR || path.join(process.cwd(), "data");
+  process.env.NATIVEMIND_DATA_DIR || path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "settings.json");
 
 export interface Settings {

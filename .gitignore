@@ -40,5 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# lumeval local data (traces, conversations, evaluations)
+# nativemind local data (traces, conversations, evaluations)
 /data

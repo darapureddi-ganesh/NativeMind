@@ -3,7 +3,7 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-  title: "Lumeval — local LLM control + observability",
+  title: "NativeMind — local LLM control + observability",
   description:
     "A lightweight UI to control your local LLMs, with tracing and evaluation built in.",
 };
@@ -17,7 +17,7 @@ export default function RootLayout({
         {/* Apply saved theme before paint to avoid a flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('lumeval-theme');if(t==='light'){document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('nativemind-theme');if(t==='light'){document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();`,
           }}
         />
       </head>

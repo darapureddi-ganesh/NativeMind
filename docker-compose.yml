@@ -1,4 +1,4 @@
-# One-command stack: Ollama + Lumeval.
+# One-command stack: Ollama + NativeMind.
 #   docker compose up
 # Then open http://localhost:3000
 #
@@ -8,7 +8,7 @@
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: lumeval-ollama
+    container_name: nativemind-ollama
     ports:
       - "11434:11434"
     volumes:
@@ -23,14 +23,14 @@ services:
     #           count: all
     #           capabilities: [gpu]
 
-  lumeval:
+  nativemind:
     build: .
-    container_name: lumeval-app
+    container_name: nativemind-app
     ports:
       - "3000:3000"
     environment:
       - OLLAMA_HOST=http://ollama:11434
-      - LUMEVAL_DATA_DIR=/app/data
+      - NATIVEMIND_DATA_DIR=/app/data
     volumes:
       - ./data:/app/data
     depends_on:
