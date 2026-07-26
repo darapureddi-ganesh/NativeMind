@@ -14,6 +14,10 @@ import type {
   Conversation,
   StoredMessage,
   Evaluation,
+  Dataset,
+  DatasetItem,
+  Experiment,
+  ExperimentResult,
 } from "./types";
 
 const DATA_DIR =
@@ -161,5 +165,98 @@ export const evaluations = {
       "evaluations",
       readAll<Evaluation>("evaluations").filter((e) => e.id !== id)
     );
+  },
+};
+
+/* -------------------------------- Datasets --------------------------------- */
+
+export const datasets = {
+  list(): Dataset[] {
+    return readAll<Dataset>("datasets").sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt)
+    );
+  },
+  get(id: string): Dataset | undefined {
+    return readAll<Dataset>("datasets").find((d) => d.id === id);
+  },
+  insert(d: Dataset): Dataset {
+    const rows = readAll<Dataset>("datasets");
+    rows.push(d);
+    writeAll("datasets", rows);
+    return d;
+  },
+  remove(id: string): void {
+    writeAll("datasets", readAll<Dataset>("datasets").filter((d) => d.id !== id));
+    writeAll(
+      "dataset_items",
+      readAll<DatasetItem>("dataset_items").filter((i) => i.datasetId !== id)
+    );
+  },
+};
+
+export const datasetItems = {
+  byDataset(datasetId: string): DatasetItem[] {
+    return readAll<DatasetItem>("dataset_items")
+      .filter((i) => i.datasetId === datasetId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  },
+  insert(item: DatasetItem): DatasetItem {
+    const rows = readAll<DatasetItem>("dataset_items");
+    rows.push(item);
+    writeAll("dataset_items", rows);
+    return item;
+  },
+  remove(id: string): void {
+    writeAll(
+      "dataset_items",
+      readAll<DatasetItem>("dataset_items").filter((i) => i.id !== id)
+    );
+  },
+};
+
+/* ------------------------------- Experiments ------------------------------- */
+
+export const experiments = {
+  list(): Experiment[] {
+    return readAll<Experiment>("experiments").sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt)
+    );
+  },
+  byDataset(datasetId: string): Experiment[] {
+    return readAll<Experiment>("experiments")
+      .filter((e) => e.datasetId === datasetId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  },
+  get(id: string): Experiment | undefined {
+    return readAll<Experiment>("experiments").find((e) => e.id === id);
+  },
+  insert(e: Experiment): Experiment {
+    const rows = readAll<Experiment>("experiments");
+    rows.push(e);
+    writeAll("experiments", rows);
+    return e;
+  },
+  remove(id: string): void {
+    writeAll("experiments", readAll<Experiment>("experiments").filter((e) => e.id !== id));
+    writeAll(
+      "experiment_results",
+      readAll<ExperimentResult>("experiment_results").filter(
+        (r) => r.experimentId !== id
+      )
+    );
+  },
+};
+
+export const experimentResults = {
+  byExperiment(experimentId: string): ExperimentResult[] {
+    return readAll<ExperimentResult>("experiment_results").filter(
+      (r) => r.experimentId === experimentId
+    );
+  },
+  insert(r: ExperimentResult): ExperimentResult {
+    const rows = readAll<ExperimentResult>("experiment_results");
+    rows.push(r);
+    writeAll("experiment_results", rows);
+    return r;
   },
 };

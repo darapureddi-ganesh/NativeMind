@@ -68,6 +68,22 @@ Copy `.env.example` to `.env` and adjust:
 
 ## Docker
 
+### Option A — one command, bundled Ollama (recommended)
+
+Brings up **both** Ollama and Lumeval together — nothing else to install:
+
+```bash
+docker compose up
+```
+
+Open http://localhost:3000, then pull a model into the bundled Ollama:
+
+```bash
+docker compose exec ollama ollama pull llama3.2
+```
+
+### Option B — Lumeval only, against Ollama on your host
+
 ```bash
 docker build -t lumeval .
 docker run -p 3000:3000 \

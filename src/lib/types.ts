@@ -18,7 +18,7 @@ export interface TraceParams {
 export interface Trace {
   id: string;
   createdAt: string; // ISO timestamp
-  type: "chat" | "playground";
+  type: "chat" | "playground" | "experiment";
   model: string;
   systemPrompt?: string;
   input: ChatMessage[]; // full message list sent to the model
@@ -63,6 +63,49 @@ export interface Evaluation {
   label?: string; // optional categorical label, e.g. "good"/"bad"
   rationale?: string; // free text or judge explanation
   createdAt: string;
+}
+
+/* ---------------------------- Datasets & batches --------------------------- */
+
+export interface Dataset {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface DatasetItem {
+  id: string;
+  datasetId: string;
+  input: string; // the prompt to send
+  expectedOutput?: string; // optional reference answer
+  createdAt: string;
+}
+
+export interface Experiment {
+  id: string;
+  datasetId: string;
+  datasetName: string;
+  model: string;
+  systemPrompt?: string;
+  judgeModel?: string;
+  createdAt: string;
+  itemCount: number;
+  avgLatencyMs: number;
+  avgJudgeScore: number | null;
+}
+
+export interface ExperimentResult {
+  id: string;
+  experimentId: string;
+  datasetItemId: string;
+  traceId: string;
+  input: string;
+  output: string;
+  latencyMs: number;
+  totalTokens?: number;
+  judgeScore?: number | null;
+  judgeRationale?: string;
 }
 
 export interface OllamaModel {

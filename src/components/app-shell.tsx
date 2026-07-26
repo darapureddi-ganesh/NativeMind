@@ -10,6 +10,7 @@ import {
   IconModels,
   IconTraces,
   IconPlayground,
+  IconDataset,
   IconSparkle,
 } from "./icons";
 
@@ -18,6 +19,7 @@ const NAV = [
   { href: "/chat", label: "Chat", icon: IconChat },
   { href: "/models", label: "Models", icon: IconModels },
   { href: "/traces", label: "Traces", icon: IconTraces },
+  { href: "/datasets", label: "Datasets", icon: IconDataset },
   { href: "/playground", label: "Playground", icon: IconPlayground },
 ];
 

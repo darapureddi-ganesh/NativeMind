@@ -111,6 +111,23 @@ export async function chatOnce(opts: {
   messages: ChatMessage[];
   params?: TraceParams;
 }): Promise<string> {
+  return (await chatOnceDetailed(opts)).content;
+}
+
+export interface ChatOnceResult {
+  content: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  tokensPerSecond?: number;
+}
+
+/** Non-streaming chat returning content plus token/timing metrics. */
+export async function chatOnceDetailed(opts: {
+  model: string;
+  messages: ChatMessage[];
+  params?: TraceParams;
+}): Promise<ChatOnceResult> {
   const { model, messages, params } = opts;
   const res = await api("/api/chat", {
     method: "POST",
@@ -122,6 +139,25 @@ export async function chatOnce(opts: {
       options: params ?? {},
     }),
   });
-  const data = (await res.json()) as { message?: { content?: string } };
-  return data.message?.content ?? "";
+  const data = (await res.json()) as {
+    message?: { content?: string };
+    prompt_eval_count?: number;
+    eval_count?: number;
+    eval_duration?: number;
+  };
+  const promptTokens = data.prompt_eval_count;
+  const completionTokens = data.eval_count;
+  const totalTokens =
+    (promptTokens ?? 0) + (completionTokens ?? 0) || undefined;
+  const tokensPerSecond =
+    completionTokens && data.eval_duration
+      ? Number((completionTokens / (data.eval_duration / 1e9)).toFixed(1))
+      : undefined;
+  return {
+    content: data.message?.content ?? "",
+    promptTokens,
+    completionTokens,
+    totalTokens,
+    tokensPerSecond,
+  };
 }

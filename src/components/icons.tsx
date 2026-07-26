@@ -127,6 +127,26 @@ export const IconRefresh = (p: P) => (
   </svg>
 );
 
+export const IconDataset = (p: P) => (
+  <svg {...base(p)}>
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M3 5v14a9 3 0 0 0 18 0V5" />
+    <path d="M3 12a9 3 0 0 0 18 0" />
+  </svg>
+);
+
+export const IconPlus = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+export const IconRun = (p: P) => (
+  <svg {...base(p)}>
+    <polygon points="6 3 20 12 6 21 6 3" />
+  </svg>
+);
+
 export const IconSparkle = (p: P) => (
   <svg {...base(p)}>
     <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
