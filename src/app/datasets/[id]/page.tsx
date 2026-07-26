@@ -59,6 +59,9 @@ export default function DatasetDetailPage() {
   const [judge, setJudge] = useState(true);
   const [criteria, setCriteria] = useState("");
   const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState<{ completed: number; total: number } | null>(
+    null
+  );
 
   // results view
   const [results, setResults] = useState<ExperimentResult[]>([]);
@@ -194,6 +197,7 @@ export default function DatasetDetailPage() {
     setRunning(true);
     setResults([]);
     setActiveExp(null);
+    setProgress({ completed: 0, total: items.length });
     try {
       const res = await fetch("/api/experiments", {
         method: "POST",
@@ -205,16 +209,51 @@ export default function DatasetDetailPage() {
           judge: { enabled: judge, criteria: criteria || undefined },
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Run failed");
+      if (!res.ok || !res.body) {
+        const err = await res.json().catch(() => ({ error: "Run failed" }));
+        alert(err.error || "Run failed");
         return;
       }
-      setActiveExp(data.experiment);
-      setResults(data.results ?? []);
+      // Provisional header so results render as they stream in.
+      setActiveExp({
+        id: "pending",
+        datasetId: id,
+        datasetName: dataset?.name ?? "",
+        model,
+        systemPrompt: system || undefined,
+        judgeModel: judge ? model : undefined,
+        createdAt: new Date().toISOString(),
+        itemCount: items.length,
+        avgLatencyMs: 0,
+        avgJudgeScore: null,
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const msg = JSON.parse(line);
+          if (msg.type === "start") {
+            setProgress({ completed: 0, total: msg.total });
+          } else if (msg.type === "item") {
+            setResults((prev) => [...prev, msg.result]);
+            setProgress({ completed: msg.completed, total: items.length });
+          } else if (msg.type === "done") {
+            setActiveExp(msg.experiment);
+          }
+        }
+      }
       await load();
     } finally {
       setRunning(false);
+      setProgress(null);
     }
   };
 
@@ -433,12 +472,23 @@ export default function DatasetDetailPage() {
               disabled={running || !model || items.length === 0}
             >
               {running ? <Spinner /> : <IconRun width={15} height={15} />}
-              {running ? `Running ${items.length}…` : `Run on ${items.length} prompts`}
+              {running ? "Running…" : `Run on ${items.length} prompts`}
             </Button>
-            {running && (
-              <p className="text-center text-[11px] text-muted-2">
-                Calling the model for each prompt — this can take a moment.
-              </p>
+            {running && progress && (
+              <div className="space-y-1">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-panel-2">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-300"
+                    style={{
+                      width: `${(progress.completed / progress.total) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-center text-[11px] text-muted-2">
+                  {progress.completed} / {progress.total} prompts
+                  {judge ? " · scoring each" : ""}
+                </p>
+              </div>
             )}
           </Card>
 
@@ -475,10 +525,18 @@ export default function DatasetDetailPage() {
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-medium">Results</h3>
             <Badge tone="primary">{activeExp.model}</Badge>
-            <Badge>{activeExp.itemCount} items</Badge>
-            <Badge tone="accent">{activeExp.avgLatencyMs} ms avg</Badge>
-            {activeExp.avgJudgeScore != null && (
-              <Badge tone="success">avg judge {activeExp.avgJudgeScore}/10</Badge>
+            {activeExp.id === "pending" ? (
+              <Badge>
+                {results.length}/{activeExp.itemCount} done
+              </Badge>
+            ) : (
+              <>
+                <Badge>{activeExp.itemCount} items</Badge>
+                <Badge tone="accent">{activeExp.avgLatencyMs} ms avg</Badge>
+                {activeExp.avgJudgeScore != null && (
+                  <Badge tone="success">avg judge {activeExp.avgJudgeScore}/10</Badge>
+                )}
+              </>
             )}
             <div className="ml-auto flex gap-1">
               <Button variant="subtle" size="sm" onClick={() => exportResults("csv")}>
