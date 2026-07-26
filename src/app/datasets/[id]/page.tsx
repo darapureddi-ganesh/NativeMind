@@ -21,8 +21,11 @@ import {
   IconSparkle,
   IconTraces,
   IconClock,
+  IconUpload,
+  IconDownload,
 } from "@/components/icons";
 import { timeAgo } from "@/lib/cn";
+import { parseItems, toCSV, download } from "@/lib/csv";
 import type {
   Dataset,
   DatasetItem,
@@ -44,6 +47,11 @@ export default function DatasetDetailPage() {
   // add-item form
   const [input, setInput] = useState("");
   const [expected, setExpected] = useState("");
+
+  // import
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importing, setImporting] = useState(false);
 
   // run form
   const [model, setModel] = useState("");
@@ -95,6 +103,90 @@ export default function DatasetDetailPage() {
   const deleteItem = async (itemId: string) => {
     await fetch(`/api/datasets/${id}/items?itemId=${itemId}`, { method: "DELETE" });
     load();
+  };
+
+  const runImport = async () => {
+    const parsed = parseItems(importText);
+    if (parsed.length === 0) {
+      alert("Couldn't find any prompts. Paste JSON or CSV with an 'input' column.");
+      return;
+    }
+    setImporting(true);
+    try {
+      const res = await fetch(`/api/datasets/${id}/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: parsed }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Import failed");
+        return;
+      }
+      setImportText("");
+      setShowImport(false);
+      await load();
+      alert(`Imported ${data.added} prompt${data.added === 1 ? "" : "s"}.`);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const onImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImportText(String(reader.result ?? ""));
+    reader.readAsText(file);
+  };
+
+  const exportItems = (format: "csv" | "json") => {
+    if (format === "json") {
+      download(
+        `${dataset?.name || "dataset"}.json`,
+        JSON.stringify(
+          items.map((i) => ({ input: i.input, expectedOutput: i.expectedOutput })),
+          null,
+          2
+        ),
+        "application/json"
+      );
+    } else {
+      download(
+        `${dataset?.name || "dataset"}.csv`,
+        toCSV(items as unknown as Record<string, unknown>[], ["input", "expectedOutput"]),
+        "text/csv"
+      );
+    }
+  };
+
+  const exportResults = (format: "csv" | "json") => {
+    if (results.length === 0) return;
+    const rows = results.map((r) => ({
+      input: r.input,
+      output: r.output,
+      latencyMs: r.latencyMs,
+      totalTokens: r.totalTokens ?? "",
+      judgeScore: r.judgeScore ?? "",
+      judgeRationale: r.judgeRationale ?? "",
+    }));
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (format === "json") {
+      download(`results-${stamp}.json`, JSON.stringify(rows, null, 2), "application/json");
+    } else {
+      download(
+        `results-${stamp}.csv`,
+        toCSV(rows, [
+          "input",
+          "output",
+          "latencyMs",
+          "totalTokens",
+          "judgeScore",
+          "judgeRationale",
+        ]),
+        "text/csv"
+      );
+    }
   };
 
   const run = async () => {
@@ -192,12 +284,72 @@ export default function DatasetDetailPage() {
               value={expected}
               onChange={(e) => setExpected(e.target.value)}
             />
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowImport((s) => !s)}
+              >
+                <IconUpload width={14} height={14} /> Import
+              </Button>
               <Button size="sm" onClick={addItem} disabled={!input.trim()}>
                 <IconPlus width={14} height={14} /> Add
               </Button>
             </div>
           </Card>
+
+          {showImport && (
+            <Card className="space-y-3 p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Import prompts</h3>
+                <label className="cursor-pointer text-xs text-primary hover:underline">
+                  Upload file
+                  <input
+                    type="file"
+                    accept=".csv,.json,.txt"
+                    className="hidden"
+                    onChange={onImportFile}
+                  />
+                </label>
+              </div>
+              <Textarea
+                rows={4}
+                placeholder={`Paste JSON or CSV…\n\nJSON: ["prompt one", "prompt two"]\n  or [{"input":"…","expectedOutput":"…"}]\nCSV: input,expectedOutput`}
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                className="font-mono text-xs"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setShowImport(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={runImport}
+                  disabled={importing || !importText.trim()}
+                >
+                  {importing ? <Spinner /> : <IconUpload width={14} height={14} />}
+                  Import
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {items.length > 0 && (
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-medium text-muted">
+                {items.length} prompt{items.length === 1 ? "" : "s"}
+              </span>
+              <div className="flex gap-1">
+                <Button variant="subtle" size="sm" onClick={() => exportItems("csv")}>
+                  <IconDownload width={13} height={13} /> CSV
+                </Button>
+                <Button variant="subtle" size="sm" onClick={() => exportItems("json")}>
+                  <IconDownload width={13} height={13} /> JSON
+                </Button>
+              </div>
+            </div>
+          )}
 
           {items.length === 0 ? (
             <EmptyState
@@ -328,6 +480,14 @@ export default function DatasetDetailPage() {
             {activeExp.avgJudgeScore != null && (
               <Badge tone="success">avg judge {activeExp.avgJudgeScore}/10</Badge>
             )}
+            <div className="ml-auto flex gap-1">
+              <Button variant="subtle" size="sm" onClick={() => exportResults("csv")}>
+                <IconDownload width={13} height={13} /> CSV
+              </Button>
+              <Button variant="subtle" size="sm" onClick={() => exportResults("json")}>
+                <IconDownload width={13} height={13} /> JSON
+              </Button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
