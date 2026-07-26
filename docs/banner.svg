@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" width="1200" height="480" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0d14"/>
+      <stop offset="1" stop-color="#0f1626"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c6cff"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7c6cff" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#7c6cff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="480" fill="url(#bg)"/>
+  <circle cx="930" cy="150" r="320" fill="url(#glow)"/>
+
+  <!-- Left: brand + copy -->
+  <g transform="translate(72,96)">
+    <!-- logo mark -->
+    <rect x="0" y="0" width="46" height="46" rx="12" fill="#7c6cff" fill-opacity="0.16"/>
+    <g stroke="#7c6cff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(11,11)">
+      <path d="M12 1v5M12 18v5M1 12h5M18 12h5"/>
+      <path d="M12 6a6 6 0 0 0 6 6 6 6 0 0 0-6 6 6 6 0 0 0-6-6 6 6 0 0 0 6-6z"/>
+    </g>
+
+    <text x="62" y="34" font-size="34" font-weight="700" fill="#e6ebf4">Native<tspan fill="#7c6cff">Mind</tspan></text>
+
+    <text x="0" y="104" font-size="30" font-weight="700" fill="#e6ebf4">Control your local LLMs.</text>
+    <text x="0" y="142" font-size="30" font-weight="700" fill="url(#accent)">Trace &amp; evaluate every call.</text>
+
+    <text x="0" y="184" font-size="17" fill="#8a97ad">A lightweight, self-hosted UI on top of Ollama —</text>
+    <text x="0" y="208" font-size="17" fill="#8a97ad">with observability and evaluation built in.</text>
+
+    <!-- feature pills -->
+    <g font-size="13" font-weight="600">
+      <g transform="translate(0,240)">
+        <rect width="118" height="30" rx="15" fill="#161d2e" stroke="#232c3f"/>
+        <text x="59" y="20" text-anchor="middle" fill="#c7d0df">💬 Chat</text>
+      </g>
+      <g transform="translate(130,240)">
+        <rect width="132" height="30" rx="15" fill="#161d2e" stroke="#232c3f"/>
+        <text x="66" y="20" text-anchor="middle" fill="#c7d0df">📊 Traces</text>
+      </g>
+      <g transform="translate(274,240)">
+        <rect width="150" height="30" rx="15" fill="#161d2e" stroke="#232c3f"/>
+        <text x="75" y="20" text-anchor="middle" fill="#c7d0df">⭐ Evaluations</text>
+      </g>
+      <g transform="translate(0,280)">
+        <rect width="150" height="30" rx="15" fill="#161d2e" stroke="#232c3f"/>
+        <text x="75" y="20" text-anchor="middle" fill="#c7d0df">🗂️ Datasets</text>
+      </g>
+      <g transform="translate(162,280)">
+        <rect width="176" height="30" rx="15" fill="#161d2e" stroke="#232c3f"/>
+        <text x="88" y="20" text-anchor="middle" fill="#c7d0df">⚖️ Model compare</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Right: stylised app window -->
+  <g transform="translate(700,86)">
+    <rect x="0" y="0" width="428" height="308" rx="16" fill="#0d1220" stroke="#232c3f"/>
+    <!-- sidebar -->
+    <rect x="0" y="0" width="112" height="308" rx="16" fill="#111725"/>
+    <rect x="96" y="0" width="16" height="308" fill="#111725"/>
+    <circle cx="24" cy="30" r="7" fill="#7c6cff"/>
+    <rect x="38" y="24" width="52" height="12" rx="6" fill="#2a3346"/>
+    <rect x="16" y="64" width="80" height="26" rx="8" fill="#7c6cff" fill-opacity="0.16"/>
+    <rect x="24" y="72" width="56" height="10" rx="5" fill="#7c6cff"/>
+    <g fill="#2a3346">
+      <rect x="24" y="106" width="64" height="10" rx="5"/>
+      <rect x="24" y="132" width="64" height="10" rx="5"/>
+      <rect x="24" y="158" width="64" height="10" rx="5"/>
+      <rect x="24" y="184" width="64" height="10" rx="5"/>
+    </g>
+    <rect x="16" y="250" width="80" height="30" rx="8" fill="#161d2e" stroke="#232c3f"/>
+    <circle cx="30" cy="265" r="4" fill="#34d399"/>
+    <rect x="42" y="260" width="42" height="8" rx="4" fill="#2a3346"/>
+
+    <!-- main: stat cards -->
+    <g transform="translate(132,24)">
+      <g>
+        <rect x="0" y="0" width="132" height="66" rx="10" fill="#131a29" stroke="#232c3f"/>
+        <rect x="12" y="14" width="46" height="8" rx="4" fill="#5f6b81"/>
+        <text x="12" y="48" font-size="24" font-weight="700" fill="#e6ebf4">1,284</text>
+      </g>
+      <g transform="translate(148,0)">
+        <rect x="0" y="0" width="132" height="66" rx="10" fill="#131a29" stroke="#232c3f"/>
+        <rect x="12" y="14" width="46" height="8" rx="4" fill="#5f6b81"/>
+        <text x="12" y="48" font-size="24" font-weight="700" fill="#22d3ee">63<tspan font-size="14" fill="#8a97ad"> tok/s</tspan></text>
+      </g>
+
+      <!-- chart card -->
+      <g transform="translate(0,82)">
+        <rect x="0" y="0" width="280" height="178" rx="10" fill="#131a29" stroke="#232c3f"/>
+        <rect x="14" y="16" width="120" height="9" rx="4" fill="#5f6b81"/>
+        <g fill="#7c6cff">
+          <rect x="16"  y="118" width="18" height="42" rx="3" fill-opacity="0.55"/>
+          <rect x="42"  y="96"  width="18" height="64" rx="3" fill-opacity="0.65"/>
+          <rect x="68"  y="128" width="18" height="32" rx="3" fill-opacity="0.55"/>
+          <rect x="94"  y="72"  width="18" height="88" rx="3" fill-opacity="0.8"/>
+          <rect x="120" y="104" width="18" height="56" rx="3" fill-opacity="0.65"/>
+          <rect x="146" y="58"  width="18" height="102" rx="3"/>
+          <rect x="172" y="88"  width="18" height="72" rx="3" fill-opacity="0.7"/>
+          <rect x="198" y="112" width="18" height="48" rx="3" fill-opacity="0.6"/>
+          <rect x="224" y="80"  width="18" height="80" rx="3" fill-opacity="0.75"/>
+          <rect x="250" y="100" width="16" height="60" rx="3" fill-opacity="0.6"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

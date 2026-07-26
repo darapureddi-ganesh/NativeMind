@@ -31,10 +31,7 @@ export async function POST(
 }
 
 // DELETE /api/datasets/:id/items?itemId=
-export async function DELETE(
-  req: NextRequest,
-  _ctx: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest) {
   const itemId = new URL(req.url).searchParams.get("itemId");
   if (!itemId) return NextResponse.json({ error: "itemId required" }, { status: 400 });
   datasetItems.remove(itemId);

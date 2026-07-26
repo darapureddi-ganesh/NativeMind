@@ -1,6 +1,11 @@
 # NativeMind
 
+![NativeMind — control your local LLMs, with tracing and evaluation built in](docs/banner.svg)
+
 **A lightweight UI to control your local LLMs — with tracing and evaluation built in.**
+
+![build](https://github.com/darapureddi-ganesh/NativeMind/actions/workflows/ci.yml/badge.svg)
+![license](https://img.shields.io/badge/license-MIT-blue)
 
 NativeMind is a single, self-hosted app that sits on top of [Ollama](https://ollama.com).
 Chat with your local models, manage them, compare them side-by-side — and get

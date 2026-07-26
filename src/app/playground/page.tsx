@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, Button, Select, Textarea, Badge, Spinner } from "@/components/ui";
+import { Card, Button, Select, Textarea, Spinner } from "@/components/ui";
 import { IconZap, IconClock, IconHash, IconTraces, IconPlayground } from "@/components/icons";
 import type { OllamaModel } from "@/lib/types";
 
